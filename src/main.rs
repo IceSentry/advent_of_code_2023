@@ -33,7 +33,12 @@ fn main() -> anyhow::Result<()> {
     }
 
     Command::new("cargo")
-        .args([if test { "test" } else { "run" }, "--bin", &day_str])
+        .args([
+            if test { "test" } else { "run" },
+            "--release",
+            "--bin",
+            &day_str,
+        ])
         .spawn()?
         .wait()?;
 
