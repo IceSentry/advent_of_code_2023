@@ -4,14 +4,13 @@ type Data = String;
 
 fn main() {
     let input = std::fs::read_to_string("inputs/01.txt").unwrap();
-    // let input = parse(&input);
     let input = aoc_helper::run_parser(parse, &input);
-    aoc_helper::run_solution("part_1", part_1, &input);
-    aoc_helper::run_solution("part_1_two_pass", part_1_two_pass, &input);
-    aoc_helper::run_solution("part_2_starts_with", part_2_starts_with, &input);
-    aoc_helper::run_solution("part_2_two_pass", part_2_two_pass, &input);
-    aoc_helper::run_solution("part_2_rayon", part_2_rayon, &input);
-    aoc_helper::run_solution("part_2_find", part_2_find, &input);
+    aoc_helper::run_solution!(part_1, &input);
+    aoc_helper::run_solution!(part_1_two_pass, &input);
+    aoc_helper::run_solution!(part_2_starts_with, &input);
+    aoc_helper::run_solution!(part_2_two_pass, &input);
+    aoc_helper::run_solution!(part_2_rayon, &input);
+    aoc_helper::run_solution!(part_2_find, &input);
 }
 
 fn parse(input: &str) -> Vec<Data> {

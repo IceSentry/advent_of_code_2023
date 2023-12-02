@@ -21,7 +21,7 @@ fn main() -> anyhow::Result<()> {
     if !input_path.exists() {
         println!("Downloading inputs...");
         let session_token = std::env::var("COOKIE_SESSION")?;
-        let input = download_input(&session_token, 2023, day_id.parse().unwrap())?;
+        let input = aoc_helper::download_input(&session_token, 2023, day_id.parse().unwrap())?;
         std::fs::write(&input_path, input).context("writing input file")?;
         println!("Input downloaded to {}", input_path.as_path().display());
     }
@@ -45,31 +45,14 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn download_input(session_token: &str, year: u16, day: u8) -> anyhow::Result<String> {
-    let response = ureq::get(&format!(
-        "https://adventofcode.com/{}/day/{}/input",
-        year, day
-    ))
-    .set("COOKIE", &format!("session={}", session_token))
-    .set("User-Agent", "https://github.com/IceSentry/aoc_helper")
-    .call();
-    match response {
-        Ok(response) => Ok(response.into_string()?),
-        Err(ureq::Error::Status(code, _response)) => {
-            anyhow::bail!("Failed to download inputs. status_code={}", code)
-        }
-        Err(_) => anyhow::bail!("Unknown error while downloading input"),
-    }
-}
-
 const TEMPLATE: &str = indoc::indoc! {"
 type Data = i32;
 
 fn main() {
     let input = std::fs::read_to_string(\"inputs/{{DAY_ID}}.txt\").unwrap();
-    let input = parse(&input);
-    println!(\"part_1: {}\", part_1(&input));
-    println!(\"part_2: {}\", part_2(&input));
+    let input = aoc_helper::run_parser(parse, &input);
+    aoc_helper::run_solution!(part_1, &input);
+    aoc_helper::run_solution!(part_2, &input);
 }
 
 fn parse(input: &str) -> Vec<Data> {
