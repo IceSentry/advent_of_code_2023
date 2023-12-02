@@ -1,4 +1,4 @@
-type Data = (u32, Vec<Round>);
+type Data = (u32, Vec<Cube>);
 
 fn main() {
     let input = std::fs::read_to_string("inputs/02.txt").unwrap();
@@ -7,49 +7,44 @@ fn main() {
     aoc_helper::run_solution!(part_2, &input);
 }
 
-#[derive(Default, Debug)]
-struct Round {
-    red: u32,
-    green: u32,
-    blue: u32,
+enum Cube {
+    Red(u32),
+    Green(u32),
+    Blue(u32),
 }
 
 fn parse(input: &str) -> Vec<Data> {
     input
         .lines()
         .map(|l| {
-            let (game_id, game) = sscanf::scanf!(l, "Game {}: {}", u32, String).unwrap();
-            let mut rounds = vec![];
-            for round_str in game.split(';') {
-                let mut round = Round::default();
-                for entry in round_str.split(',') {
-                    let entry = entry.trim();
-                    let (count, color) = entry.split_once(' ').unwrap();
+            let (game_id, game_str) = sscanf::scanf!(l, "Game {}: {}", u32, String).unwrap();
+            let mut game = vec![];
+            for cubes_str in game_str.split(';') {
+                for entry in cubes_str.split(',') {
+                    let (count, color) = entry.trim().split_once(' ').unwrap();
                     let count = count.parse::<u32>().unwrap();
-                    match color {
-                        "red" => round.red = count,
-                        "green" => round.green = count,
-                        "blue" => round.blue = count,
+                    game.push(match color {
+                        "red" => Cube::Red(count),
+                        "green" => Cube::Green(count),
+                        "blue" => Cube::Blue(count),
                         _ => unreachable!(),
-                    }
+                    });
                 }
-                rounds.push(round);
             }
-            (game_id, rounds)
+            (game_id, game)
         })
         .collect()
 }
 
 fn part_1(input: &[Data]) -> u32 {
     let mut result = 0;
-    for (id, rounds) in input {
-        let mut game = Round::default();
-        for round in rounds {
-            game.red = round.red.max(game.red);
-            game.green = round.green.max(game.green);
-            game.blue = round.blue.max(game.blue);
-        }
-        if game.red <= 12 && game.green <= 13 && game.blue <= 14 {
+    for (id, game) in input {
+        let possible = game.iter().all(|c| match *c {
+            Cube::Red(red) => red <= 12,
+            Cube::Green(green) => green <= 13,
+            Cube::Blue(blue) => blue <= 14,
+        });
+        if possible {
             result += id;
         }
     }
@@ -58,14 +53,16 @@ fn part_1(input: &[Data]) -> u32 {
 
 fn part_2(input: &[Data]) -> u32 {
     let mut result = 0;
-    for (_id, rounds) in input {
-        let mut game = Round::default();
-        for round in rounds {
-            game.red = round.red.max(game.red);
-            game.green = round.green.max(game.green);
-            game.blue = round.blue.max(game.blue);
+    for (_id, game) in input {
+        let (mut max_r, mut max_g, mut max_b) = (0, 0, 0);
+        for cube in game.iter() {
+            match *cube {
+                Cube::Red(r) => max_r = r.max(max_r),
+                Cube::Green(g) => max_g = g.max(max_g),
+                Cube::Blue(b) => max_b = b.max(max_b),
+            }
         }
-        result += game.red * game.green * game.blue;
+        result += max_r * max_g * max_b;
     }
     result
 }
