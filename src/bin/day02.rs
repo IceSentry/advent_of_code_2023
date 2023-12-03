@@ -1,4 +1,4 @@
-type Data = (u32, Vec<Cube>);
+type Data = (u32, (u32, u32, u32));
 
 fn main() {
     let input = std::fs::read_to_string("inputs/02.txt").unwrap();
@@ -7,64 +7,46 @@ fn main() {
     aoc_helper::run_solution!(part_2, &input);
 }
 
-enum Cube {
-    Red(u32),
-    Green(u32),
-    Blue(u32),
-}
-
 fn parse(input: &str) -> Vec<Data> {
     input
         .lines()
         .map(|l| {
-            let (game_id, game_str) = sscanf::scanf!(l, "Game {}: {}", u32, String).unwrap();
-            let mut game = vec![];
+            // Game {game_id}: {game_str}
+            let (game_id, game_str) = l.split_once(':').unwrap();
+            let game_id = game_id.replace("Game ", "").parse::<u32>().unwrap();
+            let (mut max_r, mut max_g, mut max_b) = (0, 0, 0);
             for cubes_str in game_str.split(';') {
-                for entry in cubes_str.split(',') {
-                    let (count, color) = entry.trim().split_once(' ').unwrap();
+                // {count} {color},
+                for cube in cubes_str.split(',') {
+                    let (count, color) = cube.trim().split_once(' ').unwrap();
                     let count = count.parse::<u32>().unwrap();
-                    game.push(match color {
-                        "red" => Cube::Red(count),
-                        "green" => Cube::Green(count),
-                        "blue" => Cube::Blue(count),
+                    match color {
+                        "red" => max_r = count.max(max_r),
+                        "green" => max_g = count.max(max_g),
+                        "blue" => max_b = count.max(max_b),
                         _ => unreachable!(),
-                    });
+                    };
                 }
             }
-            (game_id, game)
+            (game_id, (max_r, max_g, max_b))
         })
         .collect()
 }
 
 fn part_1(input: &[Data]) -> u32 {
-    let mut result = 0;
-    for (id, game) in input {
-        let possible = game.iter().all(|c| match *c {
-            Cube::Red(red) => red <= 12,
-            Cube::Green(green) => green <= 13,
-            Cube::Blue(blue) => blue <= 14,
-        });
-        if possible {
-            result += id;
+    input.iter().fold(0, |acc, &(id, (max_r, max_g, max_b))| {
+        if max_r <= 12 && max_g <= 13 && max_b <= 14 {
+            acc + id
+        } else {
+            acc
         }
-    }
-    result
+    })
 }
 
 fn part_2(input: &[Data]) -> u32 {
-    let mut result = 0;
-    for (_id, game) in input {
-        let (mut max_r, mut max_g, mut max_b) = (0, 0, 0);
-        for cube in game.iter() {
-            match *cube {
-                Cube::Red(r) => max_r = r.max(max_r),
-                Cube::Green(g) => max_g = g.max(max_g),
-                Cube::Blue(b) => max_b = b.max(max_b),
-            }
-        }
-        result += max_r * max_g * max_b;
-    }
-    result
+    input.iter().fold(0, |acc, (_, (max_r, max_g, max_b))| {
+        acc + (max_r * max_g * max_b)
+    })
 }
 
 #[cfg(test)]
