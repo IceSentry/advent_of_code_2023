@@ -3,8 +3,8 @@ type Data = (u32, (u32, u32, u32));
 fn main() {
     let input = std::fs::read_to_string("inputs/02.txt").unwrap();
     let input = aoc_helper::run_parser(parse, &input);
-    aoc_helper::run_solution!(part_1, &input);
-    aoc_helper::run_solution!(part_2, &input);
+    aoc_helper::run_solution_vec!(part_1, &input);
+    aoc_helper::run_solution_vec!(part_2, &input);
 }
 
 fn parse(input: &str) -> Vec<Data> {

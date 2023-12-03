@@ -31,16 +31,19 @@ fn main() -> anyhow::Result<()> {
         let template = TEMPLATE.replace("{{DAY_ID}}", &format!("{day_id:0>2}"));
         std::fs::write(file_path, template).context("writing day file")?;
     }
+    let mut args = vec![
+        if test { "test" } else { "run" },
+        "--release",
+        "--bin",
+        &day_str,
+    ];
+    if test {
+        args.push("--");
+        args.push("--show-output");
+    }
+    println!("cargo {}", args.join(" "));
 
-    Command::new("cargo")
-        .args([
-            if test { "test" } else { "run" },
-            "--release",
-            "--bin",
-            &day_str,
-        ])
-        .spawn()?
-        .wait()?;
+    Command::new("cargo").args(args).spawn()?.wait()?;
 
     Ok(())
 }
