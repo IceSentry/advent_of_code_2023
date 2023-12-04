@@ -21,7 +21,44 @@ enum Entry {
     Symbol(char),
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Number {
+    value: u32,
+    start: (i32, i32),
+    len: usize,
+    is_part_number: bool,
+}
+
 fn parse(input: &str) -> Data {
+    let mut symbols = HashMap::new();
+    let mut numbers = vec![];
+    for (y, line) in input.lines().enumerate() {
+        let mut number: Option<Number> = None;
+        for (x, c) in line.chars().enumerate() {
+            if c != '.' && !c.is_ascii_digit() {
+                symbols.insert((x, y), c);
+            }
+            if let Some(d) = c.to_digit(10) {
+                if let Some(number) = number.as_mut() {
+                    number.value *= 10;
+                    number.value += d;
+                    number.len += 1;
+                } else {
+                    number = Some(Number {
+                        start: (x as i32, y as i32),
+                        value: d,
+                        len: 1,
+                        is_part_number: false,
+                    });
+                }
+            } else if let Some(n) = number {
+                numbers.push(n);
+                number = None;
+            }
+        }
+    }
+    println!("{numbers:?}");
+
     let width = input.lines().next().unwrap().len();
     let input = input.replace('\n', "");
 
