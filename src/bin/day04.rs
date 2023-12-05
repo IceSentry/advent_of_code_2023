@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 type Data = (i32, Vec<i32>, Vec<i32>);
 
@@ -27,7 +27,6 @@ fn parse(input: &str) -> Vec<Data> {
                 .collect::<Vec<_>>();
             (card_id, winning_numbers, numbers)
         })
-        // .inspect(|line| println!("{line:?}"))
         .collect()
 }
 
@@ -45,20 +44,19 @@ fn part_1(input: &[Data]) -> i32 {
         })
 }
 
-fn part_2(input: &[Data]) -> usize {
+fn part_2(input: &[Data]) -> i32 {
     let mut copies = BTreeMap::new();
     for (card_id, winning_numbers, numbers) in input {
         let matches = winning_numbers
             .iter()
             .filter(|wn| numbers.contains(wn))
             .count() as i32;
-
-        let copies_for_card: i32 = *copies.entry(*card_id).or_insert(1);
-        for i in 0..matches {
-            *copies.entry(card_id + i + 1).or_insert(1) += copies_for_card;
+        let copies_for_card = *copies.entry(*card_id).or_insert(1);
+        for i in 1..=matches {
+            *copies.entry(card_id + i).or_insert(1) += copies_for_card;
         }
     }
-    copies.values().map(|x| *x as usize).sum::<usize>()
+    copies.values().sum()
 }
 
 #[cfg(test)]
