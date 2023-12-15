@@ -2,13 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 type Data = (HashMap<(i32, i32), Entry>, HashMap<usize, i32>);
 
-#[rustfmt::skip]
-const DIRECTIONS: [(i32, i32); 8] = [
-    (-1,  1), (0,  1),  (1,  1),
-    (-1,  0),           (1,  0),
-    (-1, -1), (0, -1),  (1, -1),
-];
-
 fn main() {
     let input = std::fs::read_to_string("inputs/03.txt").unwrap();
     let input = aoc_helper::run_parser(parse, &input);
@@ -16,93 +9,51 @@ fn main() {
     aoc_helper::run_solution!(part_2, &input);
 }
 
+#[derive(Debug)]
 enum Entry {
+    // Index into the numbers array
     Id(usize),
     Symbol(char),
 }
 
-#[derive(Debug, Clone, Copy)]
-struct Number {
-    value: u32,
-    start: (i32, i32),
-    len: usize,
-    is_part_number: bool,
-}
-
 fn parse(input: &str) -> Data {
-    let mut symbols = HashMap::new();
+    let mut grid = HashMap::new();
     let mut numbers = vec![];
     for (y, line) in input.lines().enumerate() {
-        let mut number: Option<Number> = None;
+        let mut num: Option<(u32, Vec<(i32, i32)>)> = None;
         for (x, c) in line.chars().enumerate() {
-            if c != '.' && !c.is_ascii_digit() {
-                symbols.insert((x, y), c);
-            }
+            let grid_pos = (x as i32, y as i32);
             if let Some(d) = c.to_digit(10) {
-                if let Some(number) = number.as_mut() {
-                    number.value *= 10;
-                    number.value += d;
-                    number.len += 1;
+                if let Some((value, positions)) = num.as_mut() {
+                    *value = (*value * 10) + d;
+                    positions.push((x as i32, y as i32));
                 } else {
-                    number = Some(Number {
-                        start: (x as i32, y as i32),
-                        value: d,
-                        len: 1,
-                        is_part_number: false,
-                    });
+                    num = Some((d, vec![(x as i32, y as i32)]));
                 }
-            } else if let Some(n) = number {
-                numbers.push(n);
-                number = None;
-            }
+                grid.insert(grid_pos, Entry::Id(numbers.len()));
+            } else {
+                if let Some(num) = num.take() {
+                    numbers.push(num);
+                }
+                if c != '.' {
+                    grid.insert(grid_pos, Entry::Symbol(c));
+                }
+            };
         }
-    }
-    println!("{numbers:?}");
-
-    let width = input.lines().next().unwrap().len();
-    let input = input.replace('\n', "");
-
-    let mut numbers = vec![];
-    let mut number_str = String::new();
-    let mut keys = vec![];
-    let mut grid = HashMap::new();
-    for (i, c) in input.chars().enumerate() {
-        let x = i % width;
-        let y = i / width;
-        let key = (x as i32, y as i32);
-        let entry = if c.is_ascii_digit() {
-            number_str.push(c);
-            keys.push(key);
-            // end of line
-            if (i / width) != ((i + 1) / width) {
-                let number = number_str.parse::<i32>().unwrap();
-                numbers.push((keys.clone(), number));
-                number_str.clear();
-                keys.clear();
-            }
-            Entry::Id(numbers.len())
-        } else {
-            if !number_str.is_empty() {
-                let number = number_str.parse::<i32>().unwrap();
-                numbers.push((keys.clone(), number));
-                number_str.clear();
-                keys.clear();
-            }
-            if c == '.' {
-                continue;
-            }
-            Entry::Symbol(c)
-        };
-        grid.insert(key, entry);
+        if let Some(num) = num.take() {
+            numbers.push(num);
+        }
     }
 
     let mut part_numbers = HashMap::new();
-    for (i, (keys, number)) in numbers.iter().enumerate() {
-        'keys: for (x, y) in keys {
-            for (x_offset, y_offset) in DIRECTIONS {
-                if let Some(Entry::Symbol(_)) = grid.get(&(*x + x_offset, *y + y_offset)) {
-                    part_numbers.insert(i, *number);
-                    break 'keys;
+    for (i, (number, positions)) in numbers.iter().enumerate() {
+        'positions: for (x, y) in positions {
+            for x_offset in [-1, 0, 1] {
+                for y_offset in [-1, 0, 1] {
+                    if let Some(Entry::Symbol(_)) = grid.get(&(*x + x_offset, *y + y_offset)) {
+                        part_numbers.insert(i, *number as i32);
+                        break 'positions;
+                    }
                 }
             }
         }
@@ -117,9 +68,11 @@ fn part_1((_grid, numbers): &Data) -> i32 {
 
 fn check_neighbours_digit(grid: &HashMap<(i32, i32), Entry>, (x, y): (i32, i32)) -> Vec<usize> {
     let mut set = HashSet::new();
-    for (x_offset, y_offset) in DIRECTIONS {
-        if let Some(Entry::Id(id)) = grid.get(&(x + x_offset, y + y_offset)) {
-            set.insert(*id);
+    for x_offset in [-1, 0, 1] {
+        for y_offset in [-1, 0, 1] {
+            if let Some(Entry::Id(id)) = grid.get(&(x + x_offset, y + y_offset)) {
+                set.insert(*id);
+            }
         }
     }
     set.iter().copied().collect()
