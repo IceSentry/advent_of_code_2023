@@ -1,4 +1,4 @@
-type Data = (Vec<i32>, Vec<i32>);
+type Data = (String, String);
 
 fn main() {
     let input = std::fs::read_to_string("inputs/06.txt").unwrap();
@@ -11,63 +11,56 @@ fn parse(input: &str) -> Data {
     let mut lines = input.lines();
 
     let time = lines.next().unwrap();
-    let time = time
-        .replace("Time:", "")
-        .split_whitespace()
-        .map(|x| x.parse::<i32>().unwrap())
-        .collect::<Vec<_>>();
 
     let distance = lines.next().unwrap();
-    let distance = distance
-        .replace("Distance:", "")
-        .split_whitespace()
-        .map(|x| x.parse::<i32>().unwrap())
-        .collect::<Vec<_>>();
 
-    (time, distance)
+    (time.to_string(), distance.to_string())
 }
 
-fn part_1((time, distance): &Data) -> i32 {
-    let mut total = vec![];
-    for (time, record) in time.iter().zip(distance) {
-        let mut count = 0;
-        for i in 0..*time {
-            let speed = i;
-            let time_travelled = time - i;
-            let dist = speed * time_travelled;
-            if dist > *record {
-                count += 1;
-            }
-        }
-        total.push(count);
-    }
-    total.iter().product()
-}
-
-fn part_2((time, distance): &Data) -> usize {
-    let real_time = time
-        .iter()
-        .fold(String::new(), |acc, t| format!("{acc}{t}"))
-        .parse::<usize>()
-        .unwrap();
-    let real_distance = distance
-        .iter()
-        .fold(String::new(), |acc, d| format!("{acc}{d}"))
-        .parse::<usize>()
-        .unwrap();
-
-    println!("{real_time}\n{real_distance}");
+fn count_possible_wins(time: u64, record: u64) -> u64 {
     let mut count = 0;
-    for i in 0..real_time {
+    for i in 0..time {
         let speed = i;
-        let time_travelled = real_time - i;
+        let time_travelled = time - i;
         let dist = speed * time_travelled;
-        if dist > real_distance {
+        if dist > record {
             count += 1;
         }
     }
-
     count
+}
+
+fn part_1((time, distance): &Data) -> u64 {
+    let time = time
+        .replace("Time:", "")
+        .split_whitespace()
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect::<Vec<_>>();
+    let distance = distance
+        .replace("Distance:", "")
+        .split_whitespace()
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect::<Vec<_>>();
+
+    time.iter()
+        .zip(distance)
+        .map(|(time, record)| count_possible_wins(*time, record))
+        .product()
+}
+
+fn part_2((time, distance): &Data) -> u64 {
+    let real_time = time
+        .replace("Time:", "")
+        .replace(' ', "")
+        .parse::<u64>()
+        .unwrap();
+    let real_distance = distance
+        .replace("Distance:", "")
+        .replace(' ', "")
+        .parse::<u64>()
+        .unwrap();
+
+    count_possible_wins(real_time, real_distance)
 }
 
 #[cfg(test)]
