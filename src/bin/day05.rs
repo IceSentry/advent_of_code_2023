@@ -82,6 +82,8 @@ fn part_2((seeds, maps): &Data) -> u32 {
     loop {
         let (dest_category, map) = &maps[&source_category];
         source_category = dest_category.clone();
+
+        // remap intervals
         let mut next_intervals = vec![];
         for [interval_start, interval_end] in &intervals {
             let mut map_iter = map.iter().peekable();
