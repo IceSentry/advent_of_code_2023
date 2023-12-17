@@ -77,14 +77,17 @@ fn hand_kind(hand: &[char], joker_rule: bool) -> Kind {
     v.reverse();
 
     match v.as_slice() {
+        [5] => Kind::FiveOfAKind,
         [c] if jokers + *c == 5 => Kind::FiveOfAKind,
         [] if jokers == 5 => Kind::FiveOfAKind,
 
+        [4, 1] => Kind::FourOfAKind,
         [c, 1] if jokers + *c == 4 => Kind::FourOfAKind,
 
         [3, 2] => Kind::FullHouse,
         [2, 2] if jokers == 1 => Kind::FullHouse,
 
+        [3, 1, 1] => Kind::ThreeOfAKind,
         [c, 1, 1] if jokers + *c == 3 => Kind::ThreeOfAKind,
 
         [2, 2, 1] => Kind::TwoPair,
